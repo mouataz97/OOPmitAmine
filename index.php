@@ -1,14 +1,11 @@
 <?php
-const  STORAGE = 'todos.txt';
+const STORAGE = 'todos.txt';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    file_put_contents(STORAGE, PHP_EOL, FILE_APPEND);
-    file_put_contents(STORAGE, $_POST['todo'], FILE_APPEND);
+    appendTodoList();
 }
 
-$todos = file_get_contents(STORAGE);
-$todos = explode(PHP_EOL, $todos);
-$todos = array_filter($todos);
+$todos = readsTodoList();
 ?>
 
     <!doctype html>
@@ -30,13 +27,7 @@ $todos = array_filter($todos);
     </form>
 
     <div style="margin-top: 15px">
-        <ul>
-            <?php
-            foreach ($todos as $todo) {
-                echo "<li>$todo</li>";
-            }
-            ?>
-        </ul>
+        <?php renderTodos($todos); ?>
     </div>
     </body>
     </html>
@@ -47,4 +38,28 @@ function dd(...$values): void
     echo '<pre>';
     var_dump(...$values);
     die();
+}
+
+function appendTodoList(): void
+{
+    file_put_contents(STORAGE, PHP_EOL, FILE_APPEND);
+    file_put_contents(STORAGE, $_POST['todo'], FILE_APPEND);
+}
+
+/**  @return string[] */
+function readsTodoList(): array
+{
+    $todos = file_get_contents(STORAGE);
+    $todos = explode(PHP_EOL, $todos);
+
+    return array_filter($todos);
+}
+
+function renderTodos(array $todos): void
+{
+    echo "<ul>";
+    foreach ($todos as $todo) {
+        echo "<li>$todo</li>";
+    }
+    echo "</ul>";
 }
