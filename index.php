@@ -1,11 +1,16 @@
 <?php
 const STORAGE = 'todos.txt';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['todo'])) {
     appendTodoList();
 }
 
 $todos = readsTodoList();
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete'])) {
+    deleteTodo(key:  (int) $_POST['delete'], todos: $todos);
+}
+
 ?>
 
     <!doctype html>
@@ -33,6 +38,8 @@ $todos = readsTodoList();
     </html>
 
 <?php
+
+
 function dd(...$values): void
 {
     echo '<pre>';
@@ -58,8 +65,26 @@ function readsTodoList(): array
 function renderTodos(array $todos): void
 {
     echo "<ul>";
-    foreach ($todos as $todo) {
-        echo "<li>$todo</li>";
+    foreach ($todos as $key => $todo) {
+        echo "<li style='margin-top: 10px'>";
+        echo '<form action="index.php" method="POST">';
+        echo '<input type="hidden" name="delete" value="' . $key . '">';
+        echo '<button type="submit"> X </button>';
+        echo " $todo";
+        echo "</form>";
+        echo "</li>";
     }
     echo "</ul>";
 }
+
+/** @param string[] $todos */
+function deleteTodo(int $key, array $todos): void
+{
+    unset($todos[$key]);
+    $input = implode(PHP_EOL, $todos);
+    file_put_contents(STORAGE, $input);
+
+    header( "Location: /" );
+    exit;
+}
+
