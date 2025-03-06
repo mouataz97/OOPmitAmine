@@ -1,14 +1,22 @@
 <?php
 const STORAGE = 'todos.txt';
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['todo'])) {
-    appendTodoList();
-}
+$defaultTodoValue = '';
+$key = -1;
 
 $todos = readsTodoList();
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['todo'])) {
+    appendTodoList((int) $_POST['key'], $todos);
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete'])) {
     deleteTodo(key:  (int) $_POST['delete'], todos: $todos);
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit'])) {
+    $key = (int) $_POST['key'];
+    $defaultTodoValue = $todos[$key];
 }
 
 ?>
@@ -27,12 +35,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete'])) {
 
     <form action="index.php" method="POST">
         <label>Todo</label>
-        <input type="text" name="todo" placeholder="todo: apply to government jobs A, B and C...">
+        <input type="text" name="todo" value="<?php echo $defaultTodoValue ?>">
+        <input type="hidden" name="key" value="<?php echo $key ?>">
         <button type="submit">Add</button>
     </form>
 
     <div style="margin-top: 15px">
-        <?php renderTodos($todos); ?>
+        <table>
+            <?php foreach ($todos as $key => $todo): ?>
+            <tr>
+                <td>
+                    <form action="index.php" method="POST">
+                        <input type="hidden" name="delete" value="delete">
+                        <input type="hidden" name="key" value="<?php echo $key ?>">
+                        <button type="submit"> delete </button>
+                    </form>
+                </td>
+                <td>
+                    <form action="index.php" method="POST">
+                        <input type="hidden" name="edit" value="edit">
+                        <input type="hidden" name="key" value="<?php echo $key ?>">
+                        <button type="submit"> edit </button>
+                    </form>
+                </td>
+                <td><?php echo $todo ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </table>
     </div>
     </body>
     </html>
@@ -47,10 +76,23 @@ function dd(...$values): void
     die();
 }
 
-function appendTodoList(): void
+function appendTodoList(int $key, array $todos): void
 {
-    file_put_contents(STORAGE, PHP_EOL, FILE_APPEND);
-    file_put_contents(STORAGE, $_POST['todo'], FILE_APPEND);
+    if ($key === -1) {
+        file_put_contents(STORAGE, PHP_EOL, FILE_APPEND);
+        file_put_contents(STORAGE, $_POST['todo'], FILE_APPEND);
+
+        return;
+    }
+
+    if ($key !== -1) {
+        $todos[$key] = $_POST['todo'];
+        $input = implode(PHP_EOL, $todos);
+        file_put_contents(STORAGE, $input);
+
+        header( "Location: /" );
+        exit;
+    }
 }
 
 /**  @return string[] */
@@ -60,21 +102,6 @@ function readsTodoList(): array
     $todos = explode(PHP_EOL, $todos);
 
     return array_filter($todos);
-}
-
-function renderTodos(array $todos): void
-{
-    echo "<ul>";
-    foreach ($todos as $key => $todo) {
-        echo "<li style='margin-top: 10px'>";
-        echo '<form action="index.php" method="POST">';
-        echo '<input type="hidden" name="delete" value="' . $key . '">';
-        echo '<button type="submit"> X </button>';
-        echo " $todo";
-        echo "</form>";
-        echo "</li>";
-    }
-    echo "</ul>";
 }
 
 /** @param string[] $todos */
