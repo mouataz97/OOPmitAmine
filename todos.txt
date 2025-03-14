@@ -1,4 +1,7 @@
 Joury jat 
 hello world!
 Amine
-google
+google.com
+Joury jat  azefg zefg
+echo "hello world";
+echo \?>
